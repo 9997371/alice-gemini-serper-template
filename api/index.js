@@ -136,6 +136,7 @@ async function askGemini(text, history, searchContext, timeoutMs) {
   if (timeoutMs < 250) throw new Error("TIME_BUDGET_EXHAUSTED");
 
   const model = String(process.env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+  console.info("Sending request to Gemini; model:", model);
   if (!/^[A-Za-z0-9._-]+$/.test(model)) throw new Error("INVALID_MODEL_NAME");
 
   const contents = safeHistory(history).map(item => ({
@@ -189,6 +190,7 @@ async function askGemini(text, history, searchContext, timeoutMs) {
   if (candidate?.finishReason === "MAX_TOKENS") {
     console.warn("Gemini reached the output token limit.");
   }
+  console.info("Gemini response received; model:", data.modelVersion || model);
   return answer;
 }
 
