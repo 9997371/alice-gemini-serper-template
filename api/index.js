@@ -21,7 +21,7 @@ function aliceResponse(text, endSession = false, history = []) {
       text: fitAliceText(text),
       end_session: endSession
     },
-    session_state: { history }
+    session_state: { history: safeHistory(history) }
   };
 }
 
@@ -51,10 +51,30 @@ function isSearchIntent(text) {
 
 function safeHistory(history) {
   if (!Array.isArray(history)) return [];
-  return history
-    .filter(item => item && (item.role === "user" || item.role === "model") && typeof item.text === "string")
+
+  const result = history
+    .filter(item =>
+      item &&
+      (item.role === "user" || item.role === "model") &&
+      typeof item.text === "string"
+    )
     .slice(-MAX_HISTORY_MESSAGES)
-    .map(item => ({ role: item.role, text: item.text.slice(0, MAX_HISTORY_MESSAGE_CHARS) }));
+    .map(item => ({
+      role: item.role,
+      text: item.text.slice(0, 160)
+    }));
+
+  while (
+    result.length > 0 &&
+    Buffer.byteLength(
+      JSON.stringify({ history: result }),
+      "utf8"
+    ) > 900
+  ) {
+    result.shift();
+  }
+
+  return result;
 }
 
 async function fetchJson(url, options, timeoutMs) {
